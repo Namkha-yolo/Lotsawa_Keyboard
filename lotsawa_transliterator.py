@@ -1,3 +1,5 @@
+# lotsawa_transliterator.py
+
 from datasets import load_dataset
 
 # Optional: custom mapping for known exceptions.
@@ -12,7 +14,7 @@ dataset = load_dataset("billingsmoore/tibetan-to-english-translation-dataset")
 # We'll work with the first 10 examples for demonstration.
 transliteration_map = []  # List of tuples: (phonetic phrase, Tibetan phrase)
 
-for i in range(100):
+for i in range(10):
     entry = dataset['train'][i]
     phonetic_phrase = entry['phonetic'].strip().lower()  # e.g., "go sum zhendön dzepé lha ding wön"
     tibetan_phrase = entry['tibetan'].strip()            # e.g., "སྒོ་གསུམ་གཞན་དོན་མཛད་པའི་ལྷ་སྡིངས་དབོན།།"
@@ -52,6 +54,7 @@ def lookup_token_exact(phonetic_token):
                 return tibetan_tokens[idx] + "་"
     return None
 
+
 def lookup_segmented(phonetic_input):
     """
     Look up the input token. (In this simple dedicated solution we assume the user enters one token.)
@@ -64,15 +67,26 @@ def lookup_segmented(phonetic_input):
     return "No match found"
 
 
-# Test cases:
-# For example:
-#   "go" (short) should return "སྒོ་"
-#   "sum" (short) should return "གསུམ་"
-#   "zhendön" is handled by custom_map and returns "གཞན་དོན"
-#   "yeshe" (5 letters) will be assumed compound, so if the mapping for the phrase
-#      "yeshe chenden khyé kyi chen ngar shak" exists, it will return the first two Tibetan tokens.
-test_inputs = ["go", "sum", "zhendön", "yeshe", "semchen", "tsewang", "choktün", "künkhyen"]
+def transliterate_text(romanized_input):
+    """
+    Given a full romanized string (which may contain multiple words),
+    split it into tokens, transliterate each token, and combine the results.
+    """
+    tokens = romanized_input.strip().split()
+    tibetan_tokens = []
+    for token in tokens:
+        tib_token = lookup_segmented(token)
+        tibetan_tokens.append(tib_token)
+    # Combine the transliterated tokens (here we use a space; adjust if needed)
+    return " ".join(tibetan_tokens)
 
-for token in test_inputs:
-    tibetan_output = lookup_segmented(token)
-    print(f"{token} → {tibetan_output}")
+
+# For testing:
+if __name__ == '__main__':
+    test_inputs = ["go", "sum", "zhendön", "yeshe", "semchen"]
+    for token in test_inputs:
+        tibetan_output = lookup_segmented(token)
+        print(f"{token} → {tibetan_output}")
+    # Testing the full function:
+    full_text = "yeshe chenden"
+    print(f"Full transliteration of '{full_text}' → {transliterate_text(full_text)}")
